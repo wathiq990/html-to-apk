@@ -4,29 +4,14 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true # فرض النسخة المطلوبة في 2026
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Build APK in Docker
+        uses: docker://ghcr.io/kivy/buildozer:master
         with:
-          python-version: '3.11'
-
-      - name: Install Dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
-          pip3 install --user --upgrade buildozer
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: Build APK with Buildozer
-        run: |
-          # إضافة ملف سبيكي إذا لم يكن موجوداً لضمان عدم الفشل
-          if [ ! -f buildozer.spec ]; then buildozer init; fi
-          yes | buildozer android debug
+          args: android debug
         
       - name: Upload APK
         uses: actions/upload-artifact@v4
