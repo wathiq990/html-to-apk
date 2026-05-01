@@ -1,7 +1,7 @@
 [app]
-title = My Web App
-package.name = mywebapp
-package.domain = org.wathiq
+title = My App
+package.name = myapp
+package.domain = org.test
 source.dir = www
 source.include_exts = py,png,jpg,kv,atlas,html,js,css
 version = 0.1
