@@ -2,7 +2,7 @@
 title = My Web App
 package.name = mywebapp
 package.domain = org.wathiq
-source.dir = .
+source.dir = www
 source.include_exts = py,png,jpg,kv,atlas,html,js,css
 version = 0.1
 orientation = portrait
