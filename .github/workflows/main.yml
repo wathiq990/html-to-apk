@@ -3,31 +3,18 @@ on: [push]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04 # تحديد نسخة نظام ثابتة ومستقرة
     steps:
-      # 1. سحب الكود من المستودع
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. تنصيب بايثون (الإصدار الأحدث المستقر)
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Build with Buildozer
+        # هذه النسخة هي الأكثر استقراراً وتحل مشاكل الصلاحيات تلقائياً
+        uses: ArtemSBulgakov/buildozer-action@v1
         with:
-          python-version: '3.11'
+          command: buildozer android debug
+          repository_root: .
 
-      # 3. تنصيب Buildozer
-      - name: Install Buildozer
-        run: |
-          pip install --user --upgrade buildozer
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      # 4. بناء التطبيق (هنا المرحلة الحاسمة)
-      - name: Build APK
-        run: |
-          # الموافقة على رخص أندرويد تلقائياً
-          yes | buildozer android debug
-        
-      # 5. رفع الملف الناتج للتحميل
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
