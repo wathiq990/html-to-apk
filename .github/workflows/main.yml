@@ -4,39 +4,30 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
-    # منح الصلاحيات تلقائياً من داخل الكود لتجاوز إعدادات الموقع
-    permissions:
-      contents: write
-      packages: write
-      actions: write
-
     steps:
+      # 1. سحب الكود من المستودع
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # 2. تنصيب بايثون (الإصدار الأحدث المستقر)
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install System Dependencies
+      # 3. تنصيب Buildozer
+      - name: Install Buildozer
         run: |
-          sudo apt update
-          sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
           pip install --user --upgrade buildozer
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+      # 4. بناء التطبيق (هنا المرحلة الحاسمة)
       - name: Build APK
         run: |
-          export PATH=$PATH:$HOME/.local/bin
-          # التأكد من وجود ملف الإعدادات وإلا سيتم إنشاؤه تلقائياً
-          if [ ! -f buildozer.spec ]; then buildozer init; fi
-          
-          # تعديل بسيط لضمان قبول التراخيص داخل السحاب
-          sed -i 's/# android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
-          
-          # بدء البناء الفعلي
+          # الموافقة على رخص أندرويد تلقائياً
           yes | buildozer android debug
         
+      # 5. رفع الملف الناتج للتحميل
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
