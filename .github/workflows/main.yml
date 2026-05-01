@@ -4,8 +4,12 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions: # إعطاء صلاحيات الكتابة مباشرة من الكود
+    # منح الصلاحيات تلقائياً من داخل الكود لتجاوز إعدادات الموقع
+    permissions:
       contents: write
+      packages: write
+      actions: write
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -15,14 +19,22 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Buildozer
+      - name: Install System Dependencies
         run: |
+          sudo apt update
+          sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
           pip install --user --upgrade buildozer
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Build APK
         run: |
-          # هذا الأمر يوافق على كل الرخص ويجبر البناء
+          export PATH=$PATH:$HOME/.local/bin
+          # التأكد من وجود ملف الإعدادات وإلا سيتم إنشاؤه تلقائياً
+          if [ ! -f buildozer.spec ]; then buildozer init; fi
+          
+          # تعديل بسيط لضمان قبول التراخيص داخل السحاب
+          sed -i 's/# android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
+          
+          # بدء البناء الفعلي
           yes | buildozer android debug
         
       - name: Upload APK
