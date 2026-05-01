@@ -1,0 +1,648 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><meta name='viewport' content='width=device-width, initial-scale=1'/><meta name='viewport' content='width=device-width, initial-scale=1'/><meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="ar" dir="rtl" id="main-html">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elite Invest | Pro Edition</title>
+    
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;500;700;900&display=swap');
+        :root { --bg: #0a0a0c; --surface: #16161a; --primary: #8b5cf6; --secondary: #d946ef; --success: #22c55e; --text: #f4f4f5; --border: rgba(255, 255, 255, 0.08); --gold: #fbbf24; --danger: #ef4444; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
+        body { background-color: var(--bg); color: var(--text); overflow-x: hidden; background-image: radial-gradient(circle at 0% 0%, #1e1b4b 0%, transparent 25%), radial-gradient(circle at 100% 100%, #4c1d95 0%, transparent 25%); background-attachment: fixed; }
+        
+        #sidebar { position: fixed; right: -300px; top: 0; width: 280px; height: 100vh; background: rgba(22, 22, 26, 0.98); backdrop-filter: blur(20px); z-index: 1000; border-left: 1px solid var(--border); transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); padding: 20px; overflow-y: auto; display: flex; flex-direction: column; }
+        #sidebar::-webkit-scrollbar { width: 5px; }
+        #sidebar::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+        #sidebar.active { right: 0; }
+        .sidebar-link { padding: 15px; border-radius: 16px; margin-bottom: 8px; cursor: pointer; display: flex; align-items: center; gap: 15px; transition: 0.3s; color: #a1a1aa; font-size: 0.95rem; }
+        .sidebar-link:hover { background: rgba(139, 92, 246, 0.2); color: white; }
+        .sidebar-link i { width: 20px; text-align: center; }
+        
+        #menu-toggle { position: fixed; top: 25px; right: 25px; z-index: 1001; width: 50px; height: 50px; border-radius: 50%; background: var(--primary); border: none; color: white; cursor: pointer; display: none; }
+        #auth-section { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .auth-container { background: var(--surface); border: 1px solid var(--border); padding: 45px; border-radius: 35px; width: 100%; max-width: 450px; text-align: center; }
+        .input-box { width: 100%; padding: 16px; background: #0f172a; border: 1px solid var(--border); border-radius: 15px; color: white; margin: 10px 0; }
+        .main-btn { width: 100%; padding: 16px; border-radius: 15px; border: none; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; font-weight: 800; cursor: pointer; margin-top: 20px; }
+        
+        .page-wrap { display: none; padding: 100px 20px 60px; flex-direction: column; align-items: center; }
+        .content-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; width: 100%; max-width: 1200px; }
+        .plan-box, .timer-unit { background: var(--surface); border: 1px solid var(--border); border-radius: 30px; padding: 35px; text-align: center; }
+        .vip-badge { background: linear-gradient(90deg, var(--gold), #d97706); color: #000; padding: 5px 12px; border-radius: 10px; font-size: 0.8rem; font-weight: 900; margin-top: 10px; display: inline-block; }
+        #page-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; z-index: 999; }
+        .limit-notice { color: var(--danger); font-size: 0.8rem; margin-top: 10px; font-weight: bold; }
+        .member-id-box { background: rgba(251, 191, 36, 0.1); color: var(--gold); padding: 10px; border-radius: 12px; font-size: 0.85rem; margin-top: 15px; border: 1px dashed var(--gold); cursor: pointer; }
+        
+        .logout-btn-header { position: absolute; top: 15px; left: 15px; background: rgba(239, 68, 68, 0.15); color: var(--danger); border: none; width: 35px; height: 35px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+        .logout-btn-header:hover { background: var(--danger); color: white; }
+
+        .vip-mining-container { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 40px; background: var(--surface); border-radius: 40px; border: 2px solid var(--gold); box-shadow: 0 0 20px rgba(251, 191, 36, 0.1); width: 100%; max-width: 400px; margin: 0 auto; }
+        .circular-timer { position: relative; width: 200px; height: 200px; }
+        .circular-timer svg { width: 200px; height: 200px; transform: rotate(-90deg); }
+        .circular-timer circle { fill: none; stroke-width: 10; stroke-linecap: round; }
+        .circular-timer .bg { stroke: rgba(255, 255, 255, 0.05); }
+        .circular-timer .progress { stroke: var(--gold); stroke-dasharray: 565; stroke-dashoffset: 565; transition: stroke-dashoffset 1s linear; }
+        .timer-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+        .timer-text h2 { font-size: 1.6rem; color: white; margin: 0; }
+        .timer-text p { font-size: 0.8rem; color: var(--gold); margin: 0; }
+
+        .trans-card { background: rgba(255,255,255,0.03); padding: 18px; border-radius: 18px; margin-bottom: 12px; border-right: 5px solid var(--primary); text-align: right; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.2); position: relative; }
+        .earnings-card { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.02)); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 20px; padding: 15px; margin-bottom: 20px; width: 100%; text-align: center; }
+        
+        .delete-btn { position: absolute; left: 10px; top: 10px; background: transparent; border: none; color: var(--danger); cursor: pointer; font-size: 0.9rem; opacity: 0.6; transition: 0.3s; }
+        .delete-btn:hover { opacity: 1; transform: scale(1.1); }
+        .cancel-req-btn { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); padding: 4px 8px; border-radius: 8px; font-size: 0.7rem; cursor: pointer; margin-right: 10px; }
+
+        .captcha-container { display: flex; justify-content: center; margin: 15px 0; transform: scale(0.85); }
+    </style>
+</head>
+<body>
+    <button id="menu-toggle" onclick="toggleNav()"><i class="fas fa-bars-staggered"></i></button>
+    <div id="page-overlay" onclick="toggleNav()"></div>
+    
+    <div id="sidebar">
+        <button class="logout-btn-header" onclick="exitApp()" title="تسجيل الخروج">
+            <i class="fas fa-sign-out-alt"></i>
+        </button>
+
+        <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 20px;">
+            <div id="u-initials" style="width:60px; height:60px; background:var(--primary); border-radius:18px; margin:0 auto 12px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; font-weight:bold;">?</div>
+            <h3 id="u-display-name">تحميل...</h3>
+            <div id="vip-status-area"></div>
+            
+            <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:15px; margin-top:15px;">
+                <span style="color:#a1a1aa; font-size:0.75rem;">رصيدك الحالي</span><br>
+                <span style="color:var(--primary); font-weight:bold; font-size: 0.9rem;"><span id="u-total-points">0</span> <small>نقطة</small></span><br>
+                <span style="color:var(--success); font-weight:900; font-size:1.3rem;"><span id="u-display-dollars">0.00</span> $</span>
+                <div id="u-member-id-display" class="member-id-box" style="padding: 8px; font-size: 0.75rem;" onclick="copyMyID()">
+                    <i class="fas fa-fingerprint"></i> ID: <span id="my-id-val">...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-link" onclick="route('invest')"><i class="fas fa-wallet"></i> الاستثمار</div>
+        <div class="sidebar-link" onclick="rewardRoute()"><i class="fas fa-hammer"></i> التعدين اليومي</div>
+        <div class="sidebar-link" onclick="route('withdraw')"><i class="fas fa-hand-holding-usd"></i> سحب الأرباح</div>
+        <div class="sidebar-link" onclick="route('history')"><i class="fas fa-history"></i> سجل العمليات</div>
+        <div class="sidebar-link" onclick="route('settings')"><i class="fas fa-user-cog"></i> إعدادات الحساب</div>
+    </div>
+
+    <div id="auth-section">
+        <div class="auth-container" id="login-box">
+            <h1>Elite <span style="color:var(--primary);">Invest</span></h1>
+            <input type="email" id="email-in" class="input-box" placeholder="البريد الإلكتروني">
+            <input type="password" id="pass-in" class="input-box" placeholder="كلمة المرور">
+            <button class="main-btn" onclick="handleLogin()">تسجيل الدخول</button>
+            <p style="margin-top:15px; font-size:0.85rem;"><span onclick="handleForgotPassword()" style="color:var(--gold); cursor:pointer;">نسيت كلمة المرور؟</span></p>
+            <p style="margin-top:10px; font-size:0.9rem;">ليس لديك حساب؟ <span onclick="swapForm('reg')" style="color:var(--primary); cursor:pointer;">سجل الآن</span></p>
+        </div>
+
+        <div class="auth-container" id="reg-box" style="display:none;">
+            <h1>عضوية جديدة</h1>
+            <input type="text" id="name-reg" class="input-box" placeholder="الاسم الكامل">
+            <input type="email" id="email-reg" class="input-box" placeholder="البريد الإلكتروني">
+            <input type="password" id="pass-reg" class="input-box" placeholder="كلمة المرور">
+            <input type="text" id="ref-code-in" class="input-box" placeholder="كود الإحالة (اختياري)" style="border:1px dashed var(--primary)">
+            
+            <div class="captcha-container">
+                <div class="g-recaptcha" data-sitekey="6LeiSsYsAAAAAGpO8s5xUz-u98ewsV10rWzukHgj" data-theme="dark"></div>
+            </div>
+
+            <button class="main-btn" onclick="handleReg()">إنشاء حساب</button>
+            <p style="margin-top:20px;"><span onclick="swapForm('login')" style="color:var(--primary); cursor:pointer;">العودة للدخول</span></p>
+        </div>
+    </div>
+
+    <div id="invest-page" class="page-wrap">
+        <h2 style="text-align: center;">خطط VIP الاستثمارية 💎</h2>
+        <p class="limit-notice" style="text-align: center; font-size: 1.1rem; margin-bottom: 20px; background: rgba(239, 68, 68, 0.1); padding: 15px; border-radius: 15px;">⚠️ تنبيه: إذا وصلت أرباحك إلى 150% من رأس المال المستثمر، يجب عليك إعادة الاشتراك لتتمكن من التعدين مرة أخرى.</p>
+        <div class="content-grid" id="invest-render"></div>
+    </div>
+
+    <div id="reward-page" class="page-wrap">
+        <h2>منصة التعدين اليومي ⛏️</h2>
+        <div class="content-grid" id="timer-render"></div>
+    </div>
+
+    <div id="withdraw-page" class="page-wrap">
+        <div class="auth-container">
+            <h2>سحب الأرباح 💰</h2>
+            <p style="margin-bottom: 20px; color: #a1a1aa;">الحد الأدنى للسحب هو 15$</p>
+            <input type="number" id="withdraw-amount" class="input-box" placeholder="أدخل المبلغ بالدولار">
+            <select id="withdraw-type" class="input-box">
+                <option value="" disabled selected>اختر نوع المحفظة</option>
+                <option value="ماستر كارد">ماستر كارد</option>
+                <option value="زين كاش">زين كاش</option>
+                <option value="USDT TRC20">USDT TRC20</option>
+            </select>
+            <input type="text" id="withdraw-wallet-name" class="input-box" placeholder="اسم المحفظة">
+            <input type="text" id="withdraw-method" class="input-box" placeholder="عنوان المحفظة أو رقم السحب">
+            
+            <div class="captcha-container">
+                <div class="g-recaptcha" data-sitekey="6LeiSsYsAAAAAGpO8s5xUz-u98ewsV10rWzukHgj" data-theme="dark"></div>
+            </div>
+
+            <button class="main-btn" onclick="requestWithdrawal()">تقديم طلب السحب</button>
+        </div>
+    </div>
+
+    <div id="history-page" class="page-wrap">
+        <div class="auth-container" style="max-width: 500px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>سجل العمليات 📜</h2>
+                <button onclick="clearAllHistory()" style="background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); padding: 5px 10px; border-radius: 8px; cursor: pointer; font-size: 0.75rem;">
+                    <i class="fas fa-trash-sweep"></i> مسح السجل
+                </button>
+            </div>
+            <div class="earnings-card">
+                <span style="color:#a1a1aa; font-size:0.8rem;">إجمالي الأرباح المحققة</span><br>
+                <span style="color:var(--success); font-weight:900; font-size:1.5rem;">+ <span id="total-earnings-val">0.00</span> $</span>
+            </div>
+            <div id="history-list" style="margin-top:10px; width:100%;"></div>
+        </div>
+    </div>
+
+    <div id="settings-page" class="page-wrap">
+        <div class="auth-container">
+            <h2>إعدادات الحساب ⚙️</h2>
+            <input type="text" id="settings-name" class="input-box" placeholder="تغيير الاسم">
+            <input type="email" id="settings-email" class="input-box" placeholder="تغيير البريد الإلكتروني" disabled style="opacity: 0.6;">
+            <button class="main-btn" onclick="updateAccount()">تحديث البيانات</button>
+            <div style="margin-top: 20px; padding: 15px; background: rgba(139, 92, 246, 0.1); border-radius: 15px; border: 1px solid var(--primary);">
+                <p style="font-size: 0.8rem; margin-bottom: 10px;">انسخ كودك لدعوة الأصدقاء واربح 1 نقطة لكل شخص!</p>
+                <button class="main-btn" style="margin-top:0" onclick="copyMyID()">نسخ كود الإحالة</button>
+            </div>
+            <hr style="border: 0.5px solid var(--border); margin: 25px 0;">
+            <button class="main-btn" style="background: var(--surface); border: 1px solid var(--primary);" onclick="triggerPasswordReset()">تغيير كلمة المرور (تأكيد بالإيميل)</button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyAHGrLF_LWudFoleIZGWQf8kbfcW4nujf4", authDomain: "dollar-caash.firebaseapp.com", projectId: "dollar-caash", storageBucket: "dollar-caash.firebasestorage.app", messagingSenderId: "1071661736923", appId: "1:1071661736923:web:814577711be8238bf1bdfe" };
+        
+        // تفعيل Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+
+        // تفعيل App Check Security
+        try {
+            const appCheck = firebase.appCheck();
+            appCheck.activate(
+                new firebase.appCheck.ReCaptchaV3Provider('6Lfgr8gsAAAAAHKaI9wDODiPjA2qflt6KOH2sr-f'),
+                true 
+            );
+            console.log("App Check Active");
+        } catch (err) {
+            console.error("App Check Error:", err);
+        }
+
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const POINT_VAL = 0.005;
+        let sessionUser = null;
+        let activeInterval = null;
+        let withdrawalListener = null;
+        let isWithdrawing = false;
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) { if (activeInterval) { clearInterval(activeInterval); activeInterval = null; }
+            } else { renderTimerCards(); updateLastSeen(); }
+        });
+
+        function copyMyID() {
+            const idText = document.getElementById('my-id-val').innerText;
+            navigator.clipboard.writeText(idText);
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'تم نسخ الـ ID بنجاح', showConfirmButton: false, timer: 1500 });
+        }
+
+        auth.onAuthStateChanged(user => {
+            if(user && user.emailVerified) {
+                sessionUser = user;
+                document.getElementById('menu-toggle').style.display = 'block';
+                document.getElementById('auth-section').style.display = 'none';
+                syncAppData();
+                listenForWithdrawalNotifications(user.uid);
+                updateLastSeen();
+                route('invest');
+            } else {
+                sessionUser = null;
+                if(withdrawalListener) withdrawalListener();
+                document.getElementById('menu-toggle').style.display = 'none';
+                document.getElementById('auth-section').style.display = 'flex';
+                document.querySelectorAll('.page-wrap').forEach(d => d.style.display = 'none');
+            }
+        });
+
+        function listenForWithdrawalNotifications(uid) {
+    if(withdrawalListener) withdrawalListener();
+    
+    // الاستماع فقط لطلبات السحب التي لم يتم إخطار المستخدم بها بعد
+    withdrawalListener = db.collection("withdrawals")
+        .where("userId", "==", uid)
+        .where("notified", "==", false) 
+        .onSnapshot(snapshot => {
+            snapshot.forEach(async (doc) => {
+                const data = doc.data();
+                const withdrawalDocId = doc.id;
+                
+                if (data.status === "completed" || data.status === "مكتمل") {
+                    await db.collection("withdrawals").doc(withdrawalDocId).update({ notified: true });
+                    await updateHistoryStatus(uid, withdrawalDocId, "مكتمل");
+                    
+                    Swal.fire({ 
+                        title: 'تم اكتمال طلبك! 💰', 
+                        text: `مبارك! تم تحويل مبلغ ${data.amount}$ بنجاح.`, 
+                        icon: 'success', 
+                        background: '#16161a', 
+                        color: '#fff' 
+                    });
+                } 
+                else if (data.status === "rejected" || data.status === "مرفوض") {
+                    await db.collection("withdrawals").doc(withdrawalDocId).update({ notified: true });
+                    await updateHistoryStatus(uid, withdrawalDocId, "مرفوض");
+                    
+                    Swal.fire({ 
+                        title: 'تم رفض طلبك ❌', 
+                        text: `عذراً، تم رفض طلب سحب مبلغ ${data.amount}$.`, 
+                        icon: 'error', 
+                        background: '#16161a', 
+                        color: '#fff' 
+                    });
+                }
+            });
+        }, err => console.error("Notification Listener Error:", err));
+}
+
+
+        async function updateHistoryStatus(uid, withdrawalId, newStatus) {
+            try {
+                const historyRef = db.collection("users").doc(uid).collection("history");
+                const historySnap = await historyRef.where("withdrawalId", "==", withdrawalId).get();
+                if (!historySnap.empty) {
+                    const batch = db.batch();
+                    historySnap.forEach(doc => { 
+                        batch.update(doc.ref, { status: newStatus }); 
+                    });
+                    await batch.commit();
+                    if(document.getElementById('history-page').style.display === 'flex') loadHistory();
+                }
+            } catch (err) { console.error("History Update Error:", err); }
+        }
+
+        async function requestWithdrawal() {
+            if(isWithdrawing) return;
+            const responses = document.querySelectorAll('.g-recaptcha-response');
+            let captchaResponse = "";
+            if (document.getElementById('withdraw-page').style.display === 'flex') {
+                captchaResponse = grecaptcha.getResponse(1);
+            }
+            if (!captchaResponse) {
+                captchaResponse = grecaptcha.getResponse();
+            }
+            if (!captchaResponse || captchaResponse.length === 0) {
+                return Swal.fire('تنبيه', 'يرجى تأكيد أنك لست روبوت أولاً', 'warning');
+            }
+            const amountInput = document.getElementById('withdraw-amount');
+            const amount = parseFloat(amountInput.value);
+            const type = document.getElementById('withdraw-type').value;
+            const walletName = document.getElementById('withdraw-wallet-name').value;
+            const method = document.getElementById('withdraw-method').value;
+            if (!amount || amount < 15) return Swal.fire('تنبيه', 'الحد الأدنى للسحب هو 15$', 'warning');
+            if (!type) return Swal.fire('تنبيه', 'يرجى اختيار نوع المحفظة', 'warning');
+            if (!walletName) return Swal.fire('تنبيه', 'يرجى إدخال اسم المحفظة', 'warning');
+            if (!method) return Swal.fire('تنبيه', 'يرجى إدخال عنوان المحفظة أو الرقم', 'warning');
+            isWithdrawing = true;
+            Swal.showLoading();
+            try {
+                const userDocRef = db.collection("users").doc(sessionUser.uid);
+                const doc = await userDocRef.get();
+                if (!doc.exists) throw new Error("User not found");
+                const userData = doc.data();
+                const userPoints = userData.points || 0;
+                const requiredPoints = Math.round(amount / POINT_VAL);
+                if (userPoints < requiredPoints) { 
+                    isWithdrawing = false; 
+                    return Swal.fire('خطأ', 'رصيدك غير كافٍ', 'error'); 
+                }
+                const batch = db.batch();
+                const withdrawalRef = db.collection("withdrawals").doc();
+                const historyRef = userDocRef.collection("history").doc();
+                batch.update(userDocRef, { points: firebase.firestore.FieldValue.increment(-requiredPoints) });
+                batch.set(withdrawalRef, { 
+                    userId: sessionUser.uid, userName: userData.name || "Unknown", userEmail: sessionUser.email,
+                    amount: amount, method: type, walletName: walletName, walletAddress: method, 
+                    status: "pending", notified: false, pointsDeducted: requiredPoints, 
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp() 
+                });
+                batch.set(historyRef, { 
+                    type: "سحب أرباح", amount: `-$${amount}`, status: "قيد المراجعة", 
+                    withdrawalId: withdrawalRef.id, date: firebase.firestore.FieldValue.serverTimestamp() 
+                });
+                await batch.commit();
+                grecaptcha.reset();
+                Swal.fire('تم التقديم', 'طلبك قيد المراجعة الآن.', 'success');
+                amountInput.value = ""; 
+            } catch(e) { 
+                Swal.fire('خطأ', 'حدث خطأ فني', 'error');
+            } finally { isWithdrawing = false; }
+        }
+
+        async function handleReg() {
+            const n = document.getElementById('name-reg').value, 
+                  e = document.getElementById('email-reg').value, 
+                  p = document.getElementById('pass-reg').value, 
+                  ref = document.getElementById('ref-code-in').value.trim();
+            const captchaResponse = grecaptcha.getResponse(0); 
+            if (!captchaResponse || captchaResponse.length === 0) {
+                return Swal.fire('تنبيه', 'يرجى تأكيد هويتك عبر مربع الكابتشا أولاً', 'warning');
+            }
+            if(!n || !e || !p) return Swal.fire('تنبيه', 'يرجى ملء جميع الحقول', 'warning');
+            Swal.showLoading();
+            try {
+                const res = await auth.createUserWithEmailAndPassword(e, p);
+                const newUserId = res.user.uid;
+                await res.user.sendEmailVerification();
+                let initialPoints = 0;
+                if(ref) {
+                    const rSnap = await db.collection("users").doc(ref).get();
+                    if(rSnap.exists) {
+                        await rSnap.ref.update({ points: firebase.firestore.FieldValue.increment(1) });
+                        await rSnap.ref.collection("history").add({ type: "مكافأة إحالة", amount: "+1 نقطة", date: firebase.firestore.FieldValue.serverTimestamp(), status: "مكتمل" });
+                        initialPoints = 1;
+                    }
+                }
+                await db.collection("users").doc(newUserId).set({ 
+                    name: n, email: e, memberID: newUserId, points: initialPoints, 
+                    completedTimers: 0, isVIP: false, vipLevel: null, 
+                    isVerified: false, lastDailyRewardDate: "", 
+                    lastResetDate: new Date().toLocaleDateString(), 
+                    lastVipStartTime: null, pointsCollected: true, 
+                    totalVipEarnings: 0, lastSeen: firebase.firestore.FieldValue.serverTimestamp() 
+                });
+                grecaptcha.reset(0);
+                Swal.fire('تم التسجيل', 'يرجى تفعيل بريدك الإلكتروني قبل الدخول.', 'success').then(() => { auth.signOut(); swapForm('login'); });
+            } catch(ex) { Swal.fire('فشل', ex.message, 'error'); }
+        }
+
+        async function handleLogin() {
+            const e = document.getElementById('email-in').value, p = document.getElementById('pass-in').value;
+            try {
+                const res = await auth.signInWithEmailAndPassword(e, p);
+                if(!res.user.emailVerified) { 
+                    auth.signOut(); 
+                    Swal.fire('تفعيل', 'يرجى تفعيل بريدك', 'info'); 
+                } else {
+                    await db.collection("users").doc(res.user.uid).update({
+                        isVerified: true,
+                        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            } catch(err) { Swal.fire('خطأ', 'بيانات الدخول خاطئة', 'error'); }
+        }
+
+        async function syncAppData() {
+            if(!sessionUser) return;
+            db.collection("users").doc(sessionUser.uid).onSnapshot(async doc => {
+                if(doc.exists) {
+                    const data = doc.data();
+                    const today = new Date().toLocaleDateString();
+                    if(data.lastResetDate !== today) { await db.collection("users").doc(sessionUser.uid).update({ completedTimers: 0, lastResetDate: today }); }
+                    document.getElementById('u-display-name').innerText = data.name || "مستثمر";
+                    document.getElementById('u-initials').innerText = (data.name || "?").charAt(0).toUpperCase();
+                    document.getElementById('u-total-points').innerText = data.points || 0;
+                    document.getElementById('u-display-dollars').innerText = ((data.points || 0) * POINT_VAL).toFixed(2);
+                    document.getElementById('vip-status-area').innerHTML = (data.isVIP && data.vipLevel) ? `<span class="vip-badge">VIP ${data.vipLevel}$</span>` : "";
+                    document.getElementById('my-id-val').innerText = sessionUser.uid;
+                    document.getElementById('settings-name').value = data.name || "";
+                    document.getElementById('settings-email').value = data.email || "";
+                    if(document.getElementById('total-earnings-val')) document.getElementById('total-earnings-val').innerText = (data.totalVipEarnings || 0).toFixed(2);
+                }
+            });
+        }
+
+        const timers = [{m:5}, {m:10}, {m:15}, {m:20}, {m:30}, {m:40}];
+
+        async function renderTimerCards() {
+            if (!sessionUser) return;
+            const doc = await db.collection("users").doc(sessionUser.uid).get();
+            const u = doc.data();
+            const container = document.getElementById('timer-render');
+            if (u.isVIP && u.vipLevel) {
+                const lastStart = u.lastVipStartTime ? u.lastVipStartTime.toDate() : null;
+                const now = new Date();
+                const duration = 24 * 60 * 60 * 1000; 
+                let remaining = 0;
+                if (lastStart) remaining = Math.max(0, duration - (now - lastStart));
+                container.innerHTML = `<div class="vip-mining-container"><div class="circular-timer"><svg><circle class="bg" cx="100" cy="100" r="90"></circle><circle id="vip-progress" class="progress" cx="100" cy="100" r="90"></circle></svg><div class="timer-text"><h2 id="vip-h-clock">00:00:00</h2><p id="vip-status-text">جاهز</p></div></div><h3>خطة VIP بقيمة ${u.vipLevel}$</h3><div id="vip-action-area"></div></div>`;
+                const actionArea = document.getElementById('vip-action-area');
+                if (!lastStart || (remaining <= 0 && u.pointsCollected)) {
+                    actionArea.innerHTML = `<button class="main-btn" onclick="startVipMining()">ابدأ تعدين 24 ساعة ⛏️</button>`;
+                    document.getElementById('vip-status-text').innerText = "مستعد"; updateVipCircle(0);
+                } else if (remaining <= 0 && !u.pointsCollected) {
+                    actionArea.innerHTML = `<button class="main-btn" style="background:var(--success)" onclick="collectVipReward(${u.vipLevel})">تحصيل الأرباح 💰</button>`;
+                    document.getElementById('vip-status-text').innerText = "اكتمل!"; updateVipCircle(100);
+                } else startVipCountdown(remaining);
+                return;
+            }
+            const prog = u.completedTimers || 0;
+            container.innerHTML = timers.map((t, i) => {
+                let sHtml = ''; const savedRem = localStorage.getItem(`timer_rem_${i}`);
+                if (i < prog) sHtml = '<div style="font-size:2rem; color:var(--success);">✅</div>';
+                else if (i === prog) {
+                    if (savedRem !== null) { sHtml = `<div id="clock-${i}">--:--</div><button class="main-btn" onclick="startVisualTimer(${i})">استئناف</button>`; setTimeout(() => updateDisplay(i, parseInt(savedRem)), 50); } 
+                    else sHtml = `<div id="clock-${i}">${t.m}:00</div><button class="main-btn" onclick="runT(${i}, ${t.m * 60})">بدء التعدين</button>`;
+                } else sHtml = `<div style="color:#444;">${t.m}:00</div>`;
+                return `<div class="timer-unit" style="${i > prog ? 'opacity:0.3; pointer-events:none;' : ''}"><h4>المرحلة ${i + 1}</h4>${sHtml}</div>`;
+            }).join('');
+        }
+
+        function startVipCountdown(durationMs) {
+            if (activeInterval) clearInterval(activeInterval);
+            const tick = () => {
+                durationMs -= 1000;
+                if (durationMs <= 0) { clearInterval(activeInterval); renderTimerCards(); return; }
+                const h = Math.floor(durationMs / 3600000), m = Math.floor((durationMs % 3600000) / 60000), s = Math.floor((durationMs % 60000) / 1000);
+                if (document.getElementById('vip-h-clock')) document.getElementById('vip-h-clock').innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                updateVipCircle(((24*60*60*1000 - durationMs) / (24*60*60*1000)) * 100);
+            };
+            tick(); activeInterval = setInterval(tick, 1000);
+        }
+
+        function updateVipCircle(percent) { if (document.getElementById('vip-progress')) document.getElementById('vip-progress').style.strokeDashoffset = 565 - (565 * percent / 100); }
+
+        async function startVipMining() {
+            await db.collection("users").doc(sessionUser.uid).update({ lastVipStartTime: firebase.firestore.FieldValue.serverTimestamp(), pointsCollected: false });
+            renderTimerCards();
+        }
+
+        let isCollecting = false; // قفل لمنع التكرار
+
+async function collectVipReward(vipLevel) {
+    if (isCollecting) return; // إذا كانت الدالة تعمل حالياً، تجاهل الضغط
+    
+    const claimBtn = event.target;
+    if (claimBtn) claimBtn.disabled = true;
+    
+    isCollecting = true; // تفعيل القفل
+    Swal.showLoading();
+
+    const award = Number(vipLevel) * 4;
+    const uRef = db.collection("users").doc(sessionUser.uid);
+
+    try {
+        await db.runTransaction(async (transaction) => {
+            const userDoc = await transaction.get(uRef);
+            const userData = userDoc.data();
+
+            // التحقق من داخل الداتابيز: هل تم التحصيل فعلاً؟
+            if (userData.pointsCollected === true) {
+                throw "لقد قمت بتحصيل الأرباح مسبقاً!";
+            }
+
+            transaction.update(uRef, { 
+                points: firebase.firestore.FieldValue.increment(award), 
+                totalVipEarnings: firebase.firestore.FieldValue.increment(award * POINT_VAL), 
+                pointsCollected: true 
+            });
+
+            transaction.set(uRef.collection("history").doc(), { 
+                type: "تعدين VIP", 
+                amount: `+${award} نقطة`, 
+                date: firebase.firestore.FieldValue.serverTimestamp(), 
+                status: "مكتمل" 
+            });
+        });
+
+        Swal.fire({ icon: 'success', title: 'مبارك!', text: `تم إضافة ${award} نقطة`, background: '#16161a', color: '#fff' });
+    } catch (error) { 
+        console.error("Collection Error:", error);
+        Swal.fire('تنبيه', typeof error === 'string' ? error : 'حدث خطأ أثناء التحصيل', 'warning'); 
+    } finally { 
+        isCollecting = false; // فتح القفل بعد الانتهاء
+        renderTimerCards(); 
+    }
+}
+
+
+        function runT(idx, seconds) { localStorage.setItem(`timer_rem_${idx}`, seconds); startVisualTimer(idx); }
+        function startVisualTimer(idx) {
+            if (activeInterval) clearInterval(activeInterval);
+            activeInterval = setInterval(() => {
+                let rem = parseInt(localStorage.getItem(`timer_rem_${idx}`));
+                if (rem <= 0) stopAndCollect(idx); else { rem -= 1; localStorage.setItem(`timer_rem_${idx}`, rem); updateDisplay(idx, rem); }
+            }, 1000);
+        }
+        function updateDisplay(idx, s) { if (document.getElementById('clock-' + idx)) document.getElementById('clock-' + idx).innerText = `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`; }
+
+        async function stopAndCollect(idx) {
+            if (activeInterval) clearInterval(activeInterval);
+            localStorage.removeItem(`timer_rem_${idx}`);
+            const award = [16, 16, 16, 16, 16, 20][idx];
+            const uRef = db.collection("users").doc(sessionUser.uid);
+            try {
+                await db.runTransaction(async (t) => {
+                    t.update(uRef, { points: firebase.firestore.FieldValue.increment(award), completedTimers: idx + 1 });
+                    t.set(uRef.collection("history").doc(), { type: `تعدين مرحلة ${idx+1}`, amount: `+${award} نقطة`, status: "مكتمل", date: firebase.firestore.FieldValue.serverTimestamp() });
+                });
+                Swal.fire('مبروك', `حصلت على ${award} نقطة`, 'success');
+            } catch (e) { console.error(e); } finally { renderTimerCards(); }
+        }
+
+        async function loadHistory() {
+            const historyList = document.getElementById('history-list');
+            try {
+                const snap = await db.collection("users").doc(sessionUser.uid).collection("history").orderBy("date", "desc").limit(30).get();
+                if (snap.empty) { historyList.innerHTML = "<p style='color:#a1a1aa; text-align:center;'>لا توجد عمليات</p>"; return; }
+                historyList.innerHTML = snap.docs.map(doc => {
+                    const data = doc.data();
+                    const date = data.date ? data.date.toDate() : new Date();
+                    const isNeg = data.amount.toString().includes('-');
+                    let sColor = data.status === 'مكتمل' ? 'var(--success)' : 'var(--gold)';
+                    return `<div class="trans-card" style="border-right-color: ${sColor};">
+                        <button class="delete-btn" onclick="deleteHistoryItem('${doc.id}')"><i class="fas fa-trash-alt"></i></button>
+                        <div style="display:flex; justify-content:space-between;">
+                            <span style="font-weight:bold; color:white;">${data.type}</span>
+                            <span style="color:${isNeg ? 'var(--danger)' : 'var(--success)'}; font-weight:900;">${data.amount}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:#a1a1aa; margin-top:8px;">
+                            <span>${date.toLocaleDateString('ar-EG')}</span>
+                            <span style="color:${sColor}; font-weight:bold;">${data.status || 'مكتمل'}</span>
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch(e) { historyList.innerHTML = "فشل تحميل السجل"; }
+        }
+
+        async function deleteHistoryItem(docId) {
+            try { await db.collection("users").doc(sessionUser.uid).collection("history").doc(docId).delete(); loadHistory(); } catch (e) { }
+        }
+
+        async function clearAllHistory() {
+            const result = await Swal.fire({ title: 'مسح السجل؟', icon: 'warning', showCancelButton: true, background: '#16161a', color: '#fff' });
+            if (result.isConfirmed) {
+                const snapshot = await db.collection("users").doc(sessionUser.uid).collection("history").get();
+                const batch = db.batch();
+                snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                await batch.commit(); loadHistory();
+            }
+        }
+
+        async function updateAccount() {
+            const n = document.getElementById('settings-name').value;
+            await db.collection("users").doc(sessionUser.uid).update({ name: n });
+            Swal.fire('تم', 'تم التحديث', 'success');
+        }
+
+        function triggerPasswordReset() { auth.sendPasswordResetEmail(sessionUser.email).then(() => Swal.fire('تم', 'تفقد بريدك', 'success')); }
+
+        async function updateLastSeen() { if(sessionUser) { await db.collection("users").doc(sessionUser.uid).update({ lastSeen: firebase.firestore.FieldValue.serverTimestamp() }); } }
+
+        async function handleForgotPassword() {
+            const { value: email } = await Swal.fire({ title: 'استعادة الحساب', input: 'email', confirmButtonText: 'إرسال', background: '#16161a', color: '#fff' });
+            if (email) { auth.sendPasswordResetEmail(email); Swal.fire('تم الإرسال', 'تفقد بريدك', 'success'); }
+        }
+
+        function route(p) {
+            document.querySelectorAll('.page-wrap').forEach(d => d.style.display = 'none');
+            const target = document.getElementById(p+'-page');
+            if(target) target.style.display = 'flex';
+            if(p==='invest') renderInvestCards();
+            if(p==='reward') renderTimerCards();
+            if(p==='history') loadHistory();
+            toggleNav(false);
+        }
+
+        function rewardRoute() { route('reward'); }
+
+        function renderInvestCards() {
+            const plans = [{l:'50', r:'1'}, {l:'100', r:'2'}, {l:'200', r:'4'}, {l:'400', r:'8'}, {l:'800', r:'16'}, {l:'1000', r:'20'}];
+            document.getElementById('invest-render').innerHTML = plans.map(pl => `<div class="plan-box"><h3>خطة ${pl.l}$</h3><h2>عائد ${pl.r}$ يومياً</h2><p style="font-size:0.8rem; color:#aaa;">أقصى ربح: ${pl.l * 1.5}$</p><a href="https://wa.me/9647816511974" target="_blank" class="main-btn" style="text-decoration:none; display:block;">تفعيل الآن</a></div>`).join('');
+        }
+
+        function toggleNav(f) {
+            const s = document.getElementById('sidebar'), o = document.getElementById('page-overlay');
+            if(f === false) s.classList.remove('active'); else s.classList.toggle('active');
+            o.style.display = s.classList.contains('active') ? 'block' : 'none';
+        }
+
+        function swapForm(t) {
+            document.getElementById('login-box').style.display = t==='login'?'block':'none';
+            document.getElementById('reg-box').style.display = t==='reg'?'block':'none';
+            if (typeof grecaptcha !== 'undefined') grecaptcha.reset();
+        }
+
+        async function exitApp() { 
+            await auth.signOut(); 
+            location.reload();
+        }
+    </script>
+</body>
+</html>
